@@ -1,5 +1,9 @@
+#!/bin/python
+
 import png
 from math import sqrt
+import argparse
+import os
 
 def read_png(filename):
     """
@@ -15,6 +19,12 @@ def write_png(filename, png_data):
     w = png.Writer(width=width, height=height, compression=9, **info)
     with open(filename, 'wb') as f:
         w.write(f, px_map)
+
+def read_gb(filename):
+    return bytearray(open(filename).read())
+
+def write_gb(filename, data):
+    open(filename, 'wb').write(bytearray(data))
 
 def pad_palette(palette):
     """
@@ -177,7 +187,24 @@ def test_round_trip():
     """
     Turn a predefined 2bpp into a png, then back again, and see if it matches.
     """
-    sample_2bpp = [0x28, 0x28, 0x0, 0x0, 0x0, 0x8, 0x4, 0x4, 0x0, 0x8, 0x0, 0x0, 0x82, 0x82, 0xfc, 0x7c]
-    write_png('_gbpng_test.png', gb_to_png(sample_2bpp))
+    sample_gb = bytearray([0x28, 0x28, 0x0, 0x0, 0x0, 0x8, 0x4, 0x4, 0x0, 0x8, 0x0, 0x0, 0x82, 0x82, 0xfc, 0x7c])
+    write_png('_gbpng_test.png', gb_to_png(sample_gb))
     sample_png = read_png('_gbpng_test.png')
-    return sample_2bpp == png_to_gb(sample_png)[0]
+    return sample_gb == png_to_gb(sample_png)[0]
+
+def get_args():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('filename')
+    args = ap.parse_args()
+    return args
+
+def main():
+    args = get_args()
+    filename = args.filename
+    image = read_png(filename)
+    gb, palette = png_to_gb(image)
+    filename = os.path.splitext(filename)[0] + '.2bpp'
+    write_gb(filename, gb)
+
+if __name__ == '__main__':
+    main()
